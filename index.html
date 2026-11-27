@@ -235,18 +235,35 @@
       cursor: pointer;
     }
 
-    /* 접이식 지도 시각화 패널 */
+    /* 접이식 지도 시각화 패널 (부드러운 펼침/접힘 모션) */
     .map-drawer-box {
-      border: 1.5px solid var(--line);
+      border: 0 solid var(--line);
       border-radius: var(--radius-card);
       background: var(--surface);
-      padding: 12px 14px;
-      margin-bottom: 18px;
-      display: none;
+      padding: 0 14px;
+      margin-bottom: 0;
+      max-height: 0;
+      opacity: 0;
+      transform: translateY(-6px);
+      overflow: hidden;
+      pointer-events: none;
+      transition:
+        max-height 0.34s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.24s ease,
+        transform 0.34s cubic-bezier(0.22, 1, 0.36, 1),
+        padding 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+        margin-bottom 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+        border-width 0.2s ease;
     }
 
     .map-drawer-box.open {
-      display: block;
+      border-width: 1.5px;
+      padding: 12px 14px;
+      margin-bottom: 18px;
+      max-height: 460px;
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
     }
 
     .map-drawer-head {
@@ -1422,7 +1439,7 @@
 
   <script>
     // ★ 배포한 Google Apps Script 웹 앱 URL을 입력하세요.
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwcXvFedKufudOiNH0avOTaZuIpPynUCk7WPXUgeW8XzeOyLHvy_5SPoR6b290HEEKk/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzHz_VU5XePJzI6CDEwCXLwhjw6yZBaFUmYj9bINO29wWPMmuZe4Tmd-bugYImBjzuR/exec';
     const DELIMITER = ';';
     const DELETE_PHRASE = '이 식당을 삭제하겠습니다.';
 
@@ -1471,6 +1488,8 @@
       editingPlaceId: null,
       deletingPlaceId: null,
       existingPhotoUrls: [],
+      existingPhotos: [],
+      deletedPhotoUrls: [],
       pendingPhotoUploads: [],
       photoConsentResolver: null,
       optionTarget: null,
@@ -1494,7 +1513,7 @@
     let formPickMarker = null;
 
     /* =========================================================
-     * Leaflet 지연 로드 (CDN 3곳 순차 시도) + 키 불필요 타일 폴백
+     * Leaflet 지연 로드 (CDN 3곳 순차 시도) + 타일 서버 폴백
      * ========================================================= */
     const LEAFLET_SOURCES = [
       'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/',
@@ -1503,19 +1522,9 @@
     ];
     const TILE_SOURCES = [
       {
-        name: 'OpenStreetMap',
-        url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-        opts: { maxZoom: 19, attribution: '© OpenStreetMap contributors' }
-      },
-      {
-        name: 'Esri',
-        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
-        opts: { maxZoom: 19, attribution: 'Tiles © Esri' }
-      },
-      {
-        name: 'OSM France',
-        url: 'https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png',
-        opts: { subdomains: 'abc', maxZoom: 19, attribution: '© OpenStreetMap contributors' }
+        name: 'VWorld',
+        url: 'https://xdworld.vworld.kr/2d/Base/service/{z}/{x}/{y}.png',
+        opts: { maxZoom: 19, attribution: '&copy; VWorld' }
       }
     ];
     let TILE_TIMEOUT_MS = 7000;
@@ -1633,7 +1642,7 @@
       const el = document.getElementById('overviewMapStatus');
       if (!el) return;
       if (ok) {
-        el.textContent = name === 'OpenStreetMap' ? '' : '기본 OpenStreetMap 서버에 접속하지 못해 ' + name + ' 지도로 표시 중입니다.';
+        el.textContent = name === 'VWorld' ? '' : '기본 지도 서버에 접속하지 못해 ' + name + ' 지도로 표시 중입니다.';
       } else {
         el.textContent = '배경 지도 이미지를 불러오지 못했습니다. 인터넷·광고 차단 확장프로그램·방화벽에서 지도 서버가 막혔을 수 있습니다. 핀과 거리 정보는 그대로 사용할 수 있습니다.';
       }
@@ -2384,17 +2393,28 @@
     }
 
     /* =========================================================
-     * 지도 시각화 (Leaflet + OpenStreetMap/Esri, 단순 위치 + 직선거리)
+     * 지도 시각화 (Leaflet + OpenStreetMap, 단순 위치 + 직선거리)
      * ========================================================= */
 
     function toggleOverviewMap() {
       state.overviewMapOpen = !state.overviewMapOpen;
       const box = document.getElementById('overviewMapBox');
       const btn = document.getElementById('toggleMapBtn');
+      if (!box || !btn) return;
+
       if (state.overviewMapOpen) {
         box.classList.add('open');
         btn.textContent = '지도 접기';
         renderOverviewMap();
+        const onEnd = ev => {
+          if (ev.propertyName === 'max-height') {
+            box.removeEventListener('transitionend', onEnd);
+            if (overviewMapInstance && state.overviewMapOpen) {
+              overviewMapInstance.invalidateSize();
+            }
+          }
+        };
+        box.addEventListener('transitionend', onEnd);
       } else {
         box.classList.remove('open');
         btn.textContent = '지도 보기';
@@ -2737,8 +2757,8 @@
       const photoVisualHtml = currentProxyUrl
         ? `<img id="detailPhotoImg" alt="${escapeAttr(place.name)}" />
            ${proxyUrls.length > 1
-             ? `<button type="button" class="carousel-arrow prev" onclick="event.stopPropagation();stepDetailSlide(-1)" aria-label="이전 사진">‹</button>
-                <button type="button" class="carousel-arrow next" onclick="event.stopPropagation();stepDetailSlide(1)" aria-label="다음 사진">›</button>`
+             ? `<button type="button" class="carousel-arrow prev" onclick="event.stopPropagation();stepDetailSlide(-1)" aria-label="이전 사진">&#8249;</button>
+                <button type="button" class="carousel-arrow next" onclick="event.stopPropagation();stepDetailSlide(1)" aria-label="다음 사진">&#8250;</button>`
              : ''}
            <div class="carousel-controls-bottom" onclick="event.stopPropagation()">
              ${totalPhotos > 1 ? `<span class="carousel-indicator" id="detailPhotoIndicator">${idx + 1} / ${totalPhotos}</span>` : ''}
@@ -2999,6 +3019,7 @@
 
       state.editingPlaceId = placeId;
       state.pendingPhotoUploads = [];
+      state.deletedPhotoUrls = [];
       document.getElementById('f_photo_files').value = '';
       hideNameSuggestions();
 
@@ -3015,6 +3036,13 @@
       document.getElementById('f_naver_map_url').value = existing ? (existing.naver_map_url || '') : '';
 
       state.existingPhotoUrls = existing ? splitSemi(existing.photo_url) : [];
+      const proxyUrls = existing && Array.isArray(existing.photo_proxy_urls) ? existing.photo_proxy_urls : [];
+      const fallbackRaw = existing ? splitSemi(existing.photo_url) : [];
+      const count = Math.max(proxyUrls.length, fallbackRaw.length);
+      state.existingPhotos = Array.from({ length: count }, (_, i) => ({
+        proxyUrl: proxyUrls[i] || '',
+        rawUrl: fallbackRaw[i] || proxyUrls[i] || ''
+      }));
       renderPhotoThumbStrip();
 
       formSelected.purpose = new Set(existing ? splitSemi(existing.purpose) : []);
@@ -3203,7 +3231,15 @@
     }
 
     function removeExistingPhoto(idx) {
-      state.existingPhotoUrls.splice(idx, 1);
+      const removed = state.existingPhotos[idx];
+      if (removed) {
+        const targetRef = removed.rawUrl || removed.proxyUrl;
+        if (targetRef && !state.deletedPhotoUrls.includes(targetRef)) {
+          state.deletedPhotoUrls.push(targetRef);
+        }
+      }
+      state.existingPhotos.splice(idx, 1);
+      state.existingPhotoUrls = state.existingPhotos.map(x => x.rawUrl).filter(Boolean);
       renderPhotoThumbStrip();
     }
 
@@ -3214,12 +3250,22 @@
 
     function renderPhotoThumbStrip() {
       const strip = document.getElementById('photoThumbStrip');
-      const existingHtml = state.existingPhotoUrls.map((url, idx) => `
-        <div class="photo-thumb-item">
-          <img src="${escapeAttr(url)}" alt="기존 사진" />
-          <button type="button" class="photo-thumb-remove" onclick="removeExistingPhoto(${idx})" title="제거">✕</button>
-        </div>
-      `).join('');
+      const existingHtml = state.existingPhotos.map((item, idx) => {
+        const cachedUri = item.proxyUrl && photoDataUriCache.has(item.proxyUrl)
+          ? photoDataUriCache.get(item.proxyUrl)
+          : '';
+        const srcVal = cachedUri || '';
+        const attr = item.proxyUrl && !cachedUri
+          ? `data-proxy-url="${escapeAttr(item.proxyUrl)}" data-loaded="0"`
+          : `data-loaded="${cachedUri ? '1' : '0'}"`;
+
+        return `
+          <div class="photo-thumb-item">
+            <img src="${escapeAttr(srcVal)}" alt="기존 사진 ${idx + 1}" ${attr} />
+            <button type="button" class="photo-thumb-remove" onclick="removeExistingPhoto(${idx})" title="제거">✕</button>
+          </div>
+        `;
+      }).join('');
 
       const pendingHtml = state.pendingPhotoUploads.map((item, idx) => `
         <div class="photo-thumb-item">
@@ -3229,6 +3275,7 @@
       `).join('');
 
       strip.innerHTML = existingHtml + pendingHtml;
+      loadProxyImagesIntoDom();
     }
 
     function askPhotoUploadConsent() {
@@ -3369,18 +3416,18 @@
         };
 
         if (state.editingPlaceId) {
-          // 수정: 기존 사진(서버만 URL을 알고 있음)은 그대로 두고, 새 사진만 뒤에 덧붙임
           if (uploadedUrls.length > 0) placePayload.add_photo_urls = uploadedUrls;
+          if (state.deletedPhotoUrls.length > 0) {
+            placePayload.delete_photo_urls = state.deletedPhotoUrls;
+          }
 
-          const oldPhotoCount = Number(
-            (state.places.find(p => p.place_id === state.editingPlaceId) || {}).photo_count
-          ) || 0;
+          const remainingExistingCount = state.existingPhotos.length;
 
           await postAction({
             action: 'updatePlace',
             place_id: state.editingPlaceId,
             place: placePayload
-          }, result => seedPhotoCache(result, pending, oldPhotoCount));
+          }, result => seedPhotoCache(result, pending, remainingExistingCount));
           showToast('식당 정보가 수정되었습니다.');
         } else {
           placePayload.photo_url = state.existingPhotoUrls.concat(uploadedUrls).join(DELIMITER);

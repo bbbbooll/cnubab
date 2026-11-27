@@ -1494,7 +1494,7 @@
     let formPickMarker = null;
 
     /* =========================================================
-     * Leaflet 지연 로드 (CDN 3곳 순차 시도) + 타일 서버 폴백
+     * Leaflet 지연 로드 (CDN 3곳 순차 시도) + 키 불필요 타일 폴백
      * ========================================================= */
     const LEAFLET_SOURCES = [
       'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/',
@@ -1503,24 +1503,19 @@
     ];
     const TILE_SOURCES = [
       {
-        name: 'CARTO',
-        url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-        opts: { subdomains: 'abcd', maxZoom: 19, attribution: '&copy; OpenStreetMap &copy; CARTO' }
-      },
-      {
         name: 'OpenStreetMap',
         url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-        opts: { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }
+        opts: { maxZoom: 19, attribution: '© OpenStreetMap contributors' }
       },
       {
         name: 'Esri',
         url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
-        opts: { maxZoom: 19, attribution: 'Tiles &copy; Esri' }
+        opts: { maxZoom: 19, attribution: 'Tiles © Esri' }
       },
       {
         name: 'OSM France',
         url: 'https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png',
-        opts: { subdomains: 'abc', maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }
+        opts: { subdomains: 'abc', maxZoom: 19, attribution: '© OpenStreetMap contributors' }
       }
     ];
     let TILE_TIMEOUT_MS = 7000;
@@ -1638,7 +1633,7 @@
       const el = document.getElementById('overviewMapStatus');
       if (!el) return;
       if (ok) {
-        el.textContent = name === 'CARTO' ? '' : '기본 지도 서버에 접속하지 못해 ' + name + ' 지도로 표시 중입니다.';
+        el.textContent = name === 'OpenStreetMap' ? '' : '기본 OpenStreetMap 서버에 접속하지 못해 ' + name + ' 지도로 표시 중입니다.';
       } else {
         el.textContent = '배경 지도 이미지를 불러오지 못했습니다. 인터넷·광고 차단 확장프로그램·방화벽에서 지도 서버가 막혔을 수 있습니다. 핀과 거리 정보는 그대로 사용할 수 있습니다.';
       }
@@ -2389,7 +2384,7 @@
     }
 
     /* =========================================================
-     * 지도 시각화 (Leaflet + OpenStreetMap, 단순 위치 + 직선거리)
+     * 지도 시각화 (Leaflet + OpenStreetMap/Esri, 단순 위치 + 직선거리)
      * ========================================================= */
 
     function toggleOverviewMap() {
@@ -2742,8 +2737,8 @@
       const photoVisualHtml = currentProxyUrl
         ? `<img id="detailPhotoImg" alt="${escapeAttr(place.name)}" />
            ${proxyUrls.length > 1
-             ? `<button type="button" class="carousel-arrow prev" onclick="event.stopPropagation();stepDetailSlide(-1)" aria-label="이전 사진">&#8249;</button>
-                <button type="button" class="carousel-arrow next" onclick="event.stopPropagation();stepDetailSlide(1)" aria-label="다음 사진">&#8250;</button>`
+             ? `<button type="button" class="carousel-arrow prev" onclick="event.stopPropagation();stepDetailSlide(-1)" aria-label="이전 사진">‹</button>
+                <button type="button" class="carousel-arrow next" onclick="event.stopPropagation();stepDetailSlide(1)" aria-label="다음 사진">›</button>`
              : ''}
            <div class="carousel-controls-bottom" onclick="event.stopPropagation()">
              ${totalPhotos > 1 ? `<span class="carousel-indicator" id="detailPhotoIndicator">${idx + 1} / ${totalPhotos}</span>` : ''}

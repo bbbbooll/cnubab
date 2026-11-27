@@ -235,6 +235,49 @@
       cursor: pointer;
     }
 
+    /* 접이식 지도 시각화 패널 */
+    .map-drawer-box {
+      border: 1.5px solid var(--line);
+      border-radius: var(--radius-card);
+      background: var(--surface);
+      padding: 12px 14px;
+      margin-bottom: 18px;
+      display: none;
+    }
+
+    .map-drawer-box.open {
+      display: block;
+    }
+
+    .map-drawer-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+      font-size: 0.84rem;
+    }
+
+    #overviewMap {
+      width: 100%;
+      height: 320px;
+      border-radius: 10px;
+      border: 1px solid var(--line-soft);
+      z-index: 1;
+    }
+
+    .distance-pill {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 1px 7px;
+      border-radius: 999px;
+      background: var(--soft);
+      border: 1px solid var(--line-soft);
+      color: var(--ink);
+    }
+
     /* 카드 그리드 */
     .cards-grid {
       display: grid;
@@ -340,6 +383,7 @@
       font-size: 0.92rem;
       display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 6px;
     }
 
@@ -425,7 +469,7 @@
       border-color: var(--ink);
     }
 
-    /* 모달 공통 (경량 opacity + transform 전환) */
+    /* 모달 공통 */
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -571,8 +615,9 @@
 
     .carousel-arrow {
       position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
+      top: calc(50% - 17px);
+      transform: none;
+      touch-action: manipulation;
       width: 34px;
       height: 34px;
       border-radius: 999px;
@@ -589,6 +634,34 @@
 
     .carousel-arrow.prev { left: 10px; }
     .carousel-arrow.next { right: 10px; }
+
+    /* 클릭 효과: 위치 이동 없이 얇은 그림자 링만 */
+    .carousel-arrow { transition: box-shadow 0.1s ease, background-color 0.1s ease; }
+    .carousel-arrow:active:not(:disabled) {
+      transform: none;
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.18);
+    }
+
+    /* 사진 로딩 중: 이전 사진을 흐리게 유지 + 작은 스피너 */
+    .carousel-box img { transition: opacity 0.1s ease; }
+    .carousel-box.is-loading img { opacity: 0.4; }
+    .carousel-box.is-loading::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 26px;
+      height: 26px;
+      margin: -13px 0 0 -13px;
+      border: 3px solid rgba(17, 17, 17, 0.15);
+      border-top-color: var(--ink);
+      border-radius: 50%;
+      animation: carousel-spin 0.7s linear infinite;
+      z-index: 1;
+      pointer-events: none;
+    }
+    @keyframes carousel-spin { to { transform: rotate(360deg); } }
 
     .carousel-controls-bottom {
       position: absolute;
@@ -644,6 +717,7 @@
     }
 
     .like-pill.liked { color: #e11d48; font-weight: 700; }
+    .like-pill.static { cursor: default; color: var(--muted); }
 
     .detail-sub-summary {
       font-size: 1rem;
@@ -671,6 +745,138 @@
 
     .detail-v {
       word-break: break-word;
+    }
+
+    .mini-map-box {
+      width: 100%;
+      height: 170px;
+      border: 1px solid var(--line-soft);
+      border-radius: 10px;
+      margin-top: 6px;
+      z-index: 1;
+    }
+
+    /* 지도 핀: 외부 이미지 파일 없이 CSS로 그림 */
+    .pin-icon span {
+      display: block;
+      position: relative;
+      width: 22px;
+      height: 22px;
+      background: var(--ink);
+      border: 2px solid #ffffff;
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
+      box-shadow: 0 1px 5px rgba(0, 0, 0, 0.45);
+    }
+    .pin-icon span::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 6px;
+      height: 6px;
+      margin: -3px 0 0 -3px;
+      background: #ffffff;
+      border-radius: 50%;
+    }
+
+    /* 배경 지도(타일)를 끝내 못 불러왔을 때의 대체 배경 */
+    .leaflet-container.map-no-tiles {
+      background-color: #eef0f3;
+      background-image:
+        linear-gradient(#dfe3e8 1px, transparent 1px),
+        linear-gradient(90deg, #dfe3e8 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+    .leaflet-container.map-no-tiles::after {
+      content: '배경 지도 이미지를 불러오지 못했습니다 (핀·거리는 정상)';
+      position: absolute;
+      left: 8px;
+      bottom: 8px;
+      z-index: 500;
+      font-size: 0.7rem;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.9);
+      padding: 2px 8px;
+      border-radius: 6px;
+      pointer-events: none;
+    }
+    .map-status {
+      margin-top: 6px;
+      font-size: 0.76rem;
+      color: var(--muted);
+    }
+    .map-status:empty { display: none; }
+
+    /* 테마 드롭다운 (시스템 기본 select 대체) */
+    .dd { position: relative; display: inline-block; }
+    .dd-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-width: 112px;
+      padding: 6px 10px;
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      background: var(--surface);
+      font-size: 0.84rem;
+      font-weight: 600;
+    }
+    .dd.open .dd-btn { border-color: var(--line); }
+    .dd-btn svg { flex: none; transition: transform 0.14s ease; }
+    .dd.open .dd-btn svg { transform: rotate(180deg); }
+    .dd-list {
+      display: none;
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      min-width: 100%;
+      margin: 0;
+      padding: 5px;
+      list-style: none;
+      background: var(--surface);
+      border: 1.5px solid var(--line);
+      border-radius: 12px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
+      z-index: 40;
+    }
+    .dd.open .dd-list { display: block; }
+    .dd-list li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 7px 11px;
+      border-radius: 8px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .dd-list li:hover, .dd-list li.hl { background: var(--soft); }
+    .dd-list li[aria-selected="true"] { background: var(--ink); color: #ffffff; }
+    .dd-list li[aria-selected="true"]::after { content: '✓'; font-size: 0.8rem; }
+    .dd.dd-block { display: block; }
+    .dd.dd-block .dd-btn { width: 100%; }
+    .dd.dd-block .dd-list { left: 0; right: 0; }
+
+    .map-note {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      min-height: 60px;
+      padding: 8px;
+      text-align: center;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .coord-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
     }
 
     .copyable-address {
@@ -956,14 +1162,33 @@
         <div class="active-filter-bar" id="activeFilterBar">
           <span>전체 식당 보기</span>
         </div>
-        <div style="display:flex; align-items:center; gap:8px;">
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <button type="button" id="toggleMapBtn" onclick="toggleOverviewMap()">지도 보기</button>
           <input type="text" id="searchInput" placeholder="식당명·위치·메모 검색" oninput="renderCards()" style="width:190px; padding:6px 10px; border:1px solid var(--line-soft); border-radius:8px; font-size:0.84rem;" />
-          <select id="sortSelect" onchange="renderCards()" style="padding:6px 10px; border:1px solid var(--line-soft); border-radius:8px; font-size:0.84rem;">
-            <option value="likes">좋아요순</option>
-            <option value="name">가나다순</option>
-          </select>
+          <div class="dd" id="sortDd">
+            <button type="button" class="dd-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="정렬 방식">
+              <span class="dd-label">좋아요순</span>
+              <svg width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 1l4 4 4-4"/></svg>
+            </button>
+            <ul class="dd-list" role="listbox">
+              <li role="option" data-value="likes" aria-selected="true">좋아요순</li>
+              <li role="option" data-value="distance" aria-selected="false">거리순</li>
+              <li role="option" data-value="name" aria-selected="false">가나다순</li>
+            </ul>
+            <input type="hidden" id="sortSelect" value="likes" />
+          </div>
         </div>
       </div>
+
+      <!-- 단순 위치 및 거리 시각화 패널 -->
+      <section class="map-drawer-box" id="overviewMapBox">
+        <div class="map-drawer-head">
+          <span id="overviewMapCaption">기준점: <strong>전남대학교 인문대학 1호관</strong> (마커를 누르면 대략적인 직선거리가 표시됩니다)</span>
+          <span id="overviewDistanceInfo" style="color:var(--muted);">좌표가 등록된 식당이 지도에 표시됩니다.</span>
+        </div>
+        <div id="overviewMap"></div>
+        <div class="map-status" id="overviewMapStatus"></div>
+      </section>
 
       <section class="cards-grid" id="cardsGrid">
         <div class="empty-box">불러오는 중입니다...</div>
@@ -1039,6 +1264,15 @@
         </div>
 
         <div class="form-field">
+          <label>위치 좌표 (지도 클릭 시 자동 입력)</label>
+          <div class="coord-row">
+            <input type="number" step="any" id="f_lat" placeholder="위도 (lat)" oninput="syncFormMapMarker()" />
+            <input type="number" step="any" id="f_lng" placeholder="경도 (lng)" oninput="syncFormMapMarker()" />
+          </div>
+          <div id="formPickMap" class="mini-map-box"></div>
+        </div>
+
+        <div class="form-field">
           <label for="f_parking">주차</label>
           <input type="text" id="f_parking" placeholder="예: 교내 또는 매장 앞 주차" />
         </div>
@@ -1082,8 +1316,11 @@
       <p style="font-size:0.84rem; color:var(--muted); margin:0 0 12px;">
         등록·수정·삭제·좋아요·댓글·카테고리 추가 활동에 사용됩니다. (댓글 화면에는 닉네임이 표시되지 않습니다.)
       </p>
+      <p style="font-size:0.84rem; color:var(--muted); margin:0 0 12px;">
+        비워 두고 확인하면 <strong>관찰자</strong>가 되어 열람만 할 수 있습니다.
+      </p>
       <div class="form-field">
-        <input type="text" id="nickInput" placeholder="닉네임 입력" maxlength="24" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmNickname();}" />
+        <input type="text" id="nickInput" placeholder="닉네임 입력 (비우면 관찰자)" maxlength="24" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmNickname();}" />
       </div>
       <div class="modal-actions">
         <button type="button" onclick="closeModal('nickModal')">취소</button>
@@ -1106,7 +1343,7 @@
     </div>
   </div>
 
-  <!-- 옵션 추가 팝업 모달 (1번 요청: 시스템창 대신 팝업 형식) -->
+  <!-- 옵션 추가 팝업 모달 -->
   <div class="modal-backdrop" id="addOptionModal" onclick="if(event.target===this)closeModal('addOptionModal')">
     <div class="modal-box" style="max-width:420px;">
       <h2 id="addOptionModalTitle" style="margin:0 0 8px;">새 옵션 추가</h2>
@@ -1138,11 +1375,18 @@
           <input type="text" id="newColName" placeholder="예: 룸여부, 예약제" />
         </div>
         <div class="form-field">
-          <label for="newColType">입력 방식</label>
-          <select id="newColType" onchange="toggleNewColOpts()">
-            <option value="text">직접 입력 (문자열)</option>
-            <option value="select">선택형 (복수 선택 + 옵션 추가)</option>
-          </select>
+          <label>입력 방식</label>
+          <div class="dd dd-block" id="newColTypeDd">
+            <button type="button" class="dd-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="입력 방식">
+              <span class="dd-label">직접 입력 (문자열)</span>
+              <svg width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 1l4 4 4-4"/></svg>
+            </button>
+            <ul class="dd-list" role="listbox">
+              <li role="option" data-value="text" aria-selected="true">직접 입력 (문자열)</li>
+              <li role="option" data-value="select" aria-selected="false">선택형 (복수 선택 + 옵션 추가)</li>
+            </ul>
+            <input type="hidden" id="newColType" value="text" />
+          </div>
         </div>
         <div class="form-field" id="newColOptsBox" style="display:none;">
           <label for="newColOpts">초기 선택지 (; 구분)</label>
@@ -1178,38 +1422,49 @@
 
   <script>
     // ★ 배포한 Google Apps Script 웹 앱 URL을 입력하세요.
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzTxbfhJjj9Wce8sT_X3YsR932v3gI7f2kuRqjvKfVuDYSNSCsMfyFj9AHv3G4XiK_q/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwcXvFedKufudOiNH0avOTaZuIpPynUCk7WPXUgeW8XzeOyLHvy_5SPoR6b290HEEKk/exec';
     const DELIMITER = ';';
     const DELETE_PHRASE = '이 식당을 삭제하겠습니다.';
 
-   const HEADER_SHORTCUTS = [
-  {
-    label: '식사목적',
-    colKey: 'purpose',
-    items: [
-      { text: '접대', value: '손님접대' },
-      { text: '회식', value: '회식' },
-      { text: '식사', value: '식사' }
-    ]
-  },
-  { label: '음식종류', colKey: 'category', items: ['한식', '중식', '일식', '양식'] },
-  { label: '식당위치', colKey: 'area', items: ['후문', '정문', '상대', '농대', '전철우사거리', '복개도로'] }
-];
+    // 거리 계산 기준점: 전남대학교 인문대학 1호관 (구글맵 실제 좌표로 필요 시 교체)
+    const ORIGIN_POINT = {
+      name: '전남대학교 인문대학 1호관',
+      lat: 35.1762231,
+      lng: 126.9057696
+    };
+
+    const HEADER_SHORTCUTS = [
+      {
+        label: '식사목적',
+        colKey: 'purpose',
+        items: [
+          { text: '접대', value: '손님접대' },
+          { text: '회식', value: '회식' },
+          { text: '식사', value: '식사' }
+        ]
+      },
+      { label: '음식종류', colKey: 'category', items: ['한식', '중식', '일식', '양식'] },
+      { label: '식당위치', colKey: 'area', items: ['후문', '정문', '상대', '농대', '전철우사거리', '복개도로'] }
+    ];
+
     const FIXED_KEYS = new Set([
       'place_id', 'status', 'name', 'address', '주소',
       'area', 'category', 'max_capacity', 'like_count',
       'purpose', 'photo_url', 'parking',
       'kakao_map_url', 'naver_map_url',
-      'comments_json', 'created_by', 'updated_info'
+      'comments_json', 'created_by', 'updated_info',
+      'lat', 'lng', 'distance_m', 'photo_count', 'photo_proxy_urls',
+      'comments', 'area_list', 'category_list', 'purpose_list'
     ]);
 
     const state = {
       nickname: '',
       pendingAction: null,
+      origin: { ...ORIGIN_POINT },
       places: [],
       columnsMeta: [],
       dynamicPlainColumns: [],
-      likesByNickname: {},
+      likedPlaceIds: [],
       selectedFilters: {},
       activeDetailPlaceId: null,
       detailSlideIdx: 0,
@@ -1219,7 +1474,8 @@
       pendingPhotoUploads: [],
       photoConsentResolver: null,
       optionTarget: null,
-      copiedAddressTimer: null
+      copiedAddressTimer: null,
+      overviewMapOpen: false
     };
 
     const formSelected = {
@@ -1228,6 +1484,254 @@
       area: new Set(),
       dynamicSelects: {}
     };
+
+    const photoDataUriCache = new Map();
+    let overviewMapInstance = null;
+    let overviewMarkersLayer = null;
+    let overviewLineLayer = null;
+    let detailMapInstance = null;
+    let formMapInstance = null;
+    let formPickMarker = null;
+
+    /* =========================================================
+     * Leaflet 지연 로드 (CDN 3곳 순차 시도) + 타일 서버 폴백
+     * ========================================================= */
+    const LEAFLET_SOURCES = [
+      'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/',
+      'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/',
+      'https://unpkg.com/leaflet@1.9.4/dist/'
+    ];
+    const TILE_SOURCES = [
+      {
+        name: 'CARTO',
+        url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+        opts: { subdomains: 'abcd', maxZoom: 19, attribution: '&copy; OpenStreetMap &copy; CARTO' }
+      },
+      {
+        name: 'OpenStreetMap',
+        url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+        opts: { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }
+      },
+      {
+        name: 'Esri',
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+        opts: { maxZoom: 19, attribution: 'Tiles &copy; Esri' }
+      },
+      {
+        name: 'OSM France',
+        url: 'https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png',
+        opts: { subdomains: 'abc', maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }
+      }
+    ];
+    let TILE_TIMEOUT_MS = 7000;
+    let leafletReady = false;
+    let leafletPromise = null;
+
+    function loadScriptOnce(src, timeoutMs) {
+      return new Promise((resolve, reject) => {
+        const el = document.createElement('script');
+        const timer = setTimeout(() => { el.remove(); reject(new Error('script timeout')); }, timeoutMs || 8000);
+        el.src = src;
+        el.onload = () => { clearTimeout(timer); resolve(); };
+        el.onerror = () => { clearTimeout(timer); el.remove(); reject(new Error('script load failed')); };
+        document.head.appendChild(el);
+      });
+    }
+
+    function loadCssOnce(href, timeoutMs) {
+      return new Promise((resolve, reject) => {
+        const el = document.createElement('link');
+        const timer = setTimeout(() => { el.remove(); reject(new Error('css timeout')); }, timeoutMs || 8000);
+        el.rel = 'stylesheet';
+        el.href = href;
+        el.onload = () => { clearTimeout(timer); resolve(); };
+        el.onerror = () => { clearTimeout(timer); el.remove(); reject(new Error('css load failed')); };
+        document.head.appendChild(el);
+      });
+    }
+
+    function ensureLeaflet() {
+      if (leafletReady) return Promise.resolve(true);
+      if (leafletPromise) return leafletPromise;
+      leafletPromise = (async () => {
+        for (const base of LEAFLET_SOURCES) {
+          try {
+            await Promise.all([loadCssOnce(base + 'leaflet.css'), loadScriptOnce(base + 'leaflet.js')]);
+            if (typeof L === 'undefined') continue;
+            L.Icon.Default.imagePath = base + 'images/';
+            leafletReady = true;
+            return true;
+          } catch (err) {
+            console.warn('Leaflet 로드 실패, 다음 CDN 시도:', base, err);
+          }
+        }
+        leafletPromise = null; // 다음 호출에서 재시도 허용
+        return false;
+      })();
+      return leafletPromise;
+    }
+
+    // 타일(배경 지도 이미지) 서버가 막혔거나 응답이 없으면 다음 서버로 자동 전환.
+    // 끝까지 안 되면 격자 배경으로 대체하고(핀·거리 기능은 유지) onStatus(name, ok)로 알림.
+    function addBaseTiles(map, onStatus) {
+      const container = map.getContainer();
+      let idx = 0;
+      let layer = null;
+      let loaded = 0;
+      let errors = 0;
+      let requested = 0;
+      let timer = null;
+      let dead = false;
+      const report = (name, ok) => { if (typeof onStatus === 'function') onStatus(name, ok); };
+
+      map.on('unload', () => { dead = true; clearTimeout(timer); });
+
+      function fail(reason) {
+        if (dead) return;
+        clearTimeout(timer);
+        console.warn('타일 서버 실패 (' + TILE_SOURCES[idx].name + '): ' + reason);
+        try { if (layer) map.removeLayer(layer); } catch (_) {}
+        layer = null;
+        if (idx < TILE_SOURCES.length - 1) {
+          idx += 1;
+          mount();
+        } else {
+          container.classList.add('map-no-tiles');
+          report('', false);
+        }
+      }
+
+      function mount() {
+        const src = TILE_SOURCES[idx];
+        loaded = 0;
+        errors = 0;
+        requested = 0;
+        const current = L.tileLayer(src.url, src.opts);
+        layer = current;
+        current.on('tileloadstart', () => { if (current === layer) requested += 1; });
+        current.on('tileload', () => {
+          if (current !== layer) return;
+          loaded += 1;
+          if (loaded === 1) {
+            clearTimeout(timer);
+            container.classList.remove('map-no-tiles');
+            report(src.name, true);
+          }
+        });
+        current.on('tileerror', () => {
+          if (current !== layer) return;
+          errors += 1;
+          if (loaded === 0 && errors >= 2) fail('tile error');
+        });
+        current.addTo(map);
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          // 타일 요청을 한 번도 안 한 경우(지도가 숨겨져 있는 등)는 실패로 보지 않음
+          if (current === layer && loaded === 0 && requested > 0) fail('timeout');
+        }, TILE_TIMEOUT_MS);
+      }
+
+      mount();
+    }
+
+    function setOverviewTileStatus(name, ok) {
+      const el = document.getElementById('overviewMapStatus');
+      if (!el) return;
+      if (ok) {
+        el.textContent = name === 'CARTO' ? '' : '기본 지도 서버에 접속하지 못해 ' + name + ' 지도로 표시 중입니다.';
+      } else {
+        el.textContent = '배경 지도 이미지를 불러오지 못했습니다. 인터넷·광고 차단 확장프로그램·방화벽에서 지도 서버가 막혔을 수 있습니다. 핀과 거리 정보는 그대로 사용할 수 있습니다.';
+      }
+    }
+
+    // 이미지 파일 없이 CSS로 그리는 핀 (CDN 이미지가 막혀도 보임)
+    function makePinIcon() {
+      return L.divIcon({
+        className: 'pin-icon',
+        html: '<span></span>',
+        iconSize: [22, 22],
+        iconAnchor: [11, 27],
+        popupAnchor: [0, -26],
+        tooltipAnchor: [0, -24]
+      });
+    }
+
+    function setMapNote(el, msg) {
+      if (el) el.innerHTML = `<div class="map-note">${escapeHtml(msg)}</div>`;
+    }
+
+    // 사진 프록시 요청 중복 방지(같은 URL 동시 요청 1회로 합침)
+    const photoInflight = new Map();
+
+    /* =========================================================
+     * 테마 드롭다운 (시스템 기본 select 대체)
+     * ========================================================= */
+    function initDropdown(rootId, onChange) {
+      const root = document.getElementById(rootId);
+      if (!root) return;
+      const btn = root.querySelector('.dd-btn');
+      const label = root.querySelector('.dd-label');
+      const list = root.querySelector('.dd-list');
+      const input = root.querySelector('input[type="hidden"]');
+      const items = Array.from(list.querySelectorAll('li'));
+      let hl = -1;
+
+      const setOpen = open => {
+        root.classList.toggle('open', open);
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (!open) {
+          hl = -1;
+          items.forEach(i => i.classList.remove('hl'));
+        }
+      };
+      const setHl = i => {
+        hl = (i + items.length) % items.length;
+        items.forEach((it, k) => it.classList.toggle('hl', k === hl));
+      };
+      const select = (value, fire) => {
+        const item = items.find(i => i.dataset.value === value) || items[0];
+        input.value = item.dataset.value;
+        label.textContent = item.textContent;
+        items.forEach(i => i.setAttribute('aria-selected', i === item ? 'true' : 'false'));
+        if (fire && typeof onChange === 'function') onChange(input.value);
+      };
+
+      btn.addEventListener('click', () => setOpen(!root.classList.contains('open')));
+      items.forEach(it => it.addEventListener('click', () => {
+        select(it.dataset.value, true);
+        setOpen(false);
+        btn.focus();
+      }));
+      btn.addEventListener('keydown', e => {
+        const open = root.classList.contains('open');
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          if (!open) {
+            setOpen(true);
+            setHl(items.findIndex(i => i.getAttribute('aria-selected') === 'true'));
+          } else {
+            setHl(hl + (e.key === 'ArrowDown' ? 1 : -1));
+          }
+        } else if ((e.key === 'Enter' || e.key === ' ') && open && hl >= 0) {
+          e.preventDefault();
+          select(items[hl].dataset.value, true);
+          setOpen(false);
+        } else if (e.key === 'Escape' && open) {
+          e.preventDefault();
+          setOpen(false);
+        }
+      });
+      document.addEventListener('click', e => {
+        if (!root.contains(e.target)) setOpen(false);
+      });
+      root._ddSelect = select;
+    }
+
+    function setDropdownValue(rootId, value) {
+      const root = document.getElementById(rootId);
+      if (root && typeof root._ddSelect === 'function') root._ddSelect(value, false);
+    }
+
 
     function fromCodes(codes) {
       return codes.map(c => String.fromCharCode(c)).join('');
@@ -1265,6 +1769,44 @@
       return String(place.address !== undefined && place.address !== '' ? place.address : (place['주소'] || '')).trim();
     }
 
+    function parseCoordNum(val) {
+      if (val === '' || val === null || val === undefined) return null;
+      const n = Number(val);
+      return Number.isFinite(n) ? n : null;
+    }
+
+    function calcStraightMeters(lat1, lng1, lat2, lng2) {
+      const n1 = parseCoordNum(lat1);
+      const n2 = parseCoordNum(lng1);
+      const n3 = parseCoordNum(lat2);
+      const n4 = parseCoordNum(lng2);
+      if (n1 === null || n2 === null || n3 === null || n4 === null) return null;
+      const R = 6371000;
+      const toRad = d => (d * Math.PI) / 180;
+      const dLat = toRad(n3 - n1);
+      const dLng = toRad(n4 - n2);
+      const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(toRad(n1)) * Math.cos(toRad(n3)) * Math.sin(dLng / 2) ** 2;
+      return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+    }
+
+    function getPlaceDistanceMeters(place) {
+      if (!place) return null;
+      const lat = parseCoordNum(place.lat);
+      const lng = parseCoordNum(place.lng);
+      if (lat !== null && lng !== null) {
+        return calcStraightMeters(state.origin.lat, state.origin.lng, lat, lng);
+      }
+      return parseCoordNum(place.distance_m);
+    }
+
+    function formatDistanceText(meters) {
+      if (meters === null || meters === undefined || !Number.isFinite(meters)) return '';
+      if (meters < 1000) return `약 ${Math.round(meters)}m`;
+      return `약 ${(meters / 1000).toFixed(2)}km`;
+    }
+
     function syncHeaderHeightVar() {
       const header = document.getElementById('topHeader');
       if (header) {
@@ -1289,6 +1831,7 @@
       const el = document.getElementById(id);
       if (el) el.classList.remove('open');
       if (id === 'placeFormModal') hideNameSuggestions();
+      if (id === 'detailModal') prefetchQueue.length = 0;
     }
 
     function toggleDrawer() {
@@ -1307,12 +1850,28 @@
     }
 
     function saveNickname(val) {
-      try { localStorage.setItem('archive_nickname', val); }
-      catch (_) {}
+      try {
+        if (val) localStorage.setItem('archive_nickname', val);
+        else localStorage.removeItem('archive_nickname');
+      } catch (_) {}
+    }
+
+    // 닉네임이 없으면 '관찰자' — 열람만 가능
+    function isObserver() {
+      return !(state.nickname && state.nickname.trim());
+    }
+
+    function notifyObserver() {
+      showToast('관찰자 모드에서는 열람만 가능합니다. 닉네임을 설정하면 등록·수정·댓글을 할 수 있어요.');
     }
 
     function updateNicknameUI() {
-      document.getElementById('nickDisplay').textContent = state.nickname || '미설정';
+      const el = document.getElementById('nickDisplay');
+      el.textContent = state.nickname || '관찰자';
+      const badge = el.closest ? el.closest('.nick-badge') : null;
+      if (badge) {
+        badge.title = state.nickname ? '눌러서 닉네임 변경' : '관찰자(열람 전용) — 눌러서 닉네임 설정';
+      }
     }
 
     function openNicknameModal() {
@@ -1321,38 +1880,64 @@
       setTimeout(() => document.getElementById('nickInput').focus(), 40);
     }
 
-    function confirmNickname() {
-      const v = document.getElementById('nickInput').value.trim();
-      if (!v) {
-        showToast('닉네임을 입력하세요.');
+    // 닉네임이 바뀌면 '내가 누른 좋아요' 목록도 다시 가져옴
+    async function refreshLikedPlaces() {
+      if (isObserver()) {
+        state.likedPlaceIds = [];
         return;
       }
+      if (!/^https?:\/\//i.test(String(SCRIPT_URL || ''))) return;
+      try {
+        const res = await fetch(`${SCRIPT_URL}?action=init&nickname=${encodeURIComponent(state.nickname)}`);
+        const json = await res.json();
+        if (json && json.ok && json.data && Array.isArray(json.data.likedPlaceIds)) {
+          state.likedPlaceIds = json.data.likedPlaceIds;
+          renderCards();
+          if (state.activeDetailPlaceId) renderDetailModal();
+        }
+      } catch (_) {}
+    }
+
+    function confirmNickname() {
+      const v = document.getElementById('nickInput').value.trim(); // 공란 허용 → 관찰자
+      const changed = v !== (state.nickname || '');
       state.nickname = v;
       saveNickname(v);
       updateNicknameUI();
       closeModal('nickModal');
-      renderCards();
-      if (state.activeDetailPlaceId) renderDetailModal();
+
       const fn = state.pendingAction;
       state.pendingAction = null;
-      if (typeof fn === 'function') fn();
+
+      if (changed) state.likedPlaceIds = [];
+      renderCards();
+      if (state.activeDetailPlaceId) renderDetailModal();
+      if (changed) refreshLikedPlaces();
+
+      if (!v) {
+        showToast('관찰자로 열람합니다. 등록·수정·댓글은 닉네임을 설정해야 할 수 있어요.');
+      } else if (typeof fn === 'function') {
+        fn();
+      }
     }
 
     function requireNickname(fn) {
-      if (state.nickname && state.nickname.trim()) {
-        fn();
-      } else {
-        state.pendingAction = fn;
-        openNicknameModal();
+      if (isObserver()) {
+        notifyObserver();
+        return;
       }
+      fn();
     }
 
     document.addEventListener('DOMContentLoaded', () => {
       syncHeaderHeightVar();
       window.addEventListener('resize', syncHeaderHeightVar);
+      initDropdown('sortDd', () => renderCards());
+      initDropdown('newColTypeDd', () => toggleNewColOpts());
       state.nickname = readNickname();
       updateNicknameUI();
       loadInitialData();
+      setTimeout(() => { ensureLeaflet(); }, 600); // 지도 버튼을 누르기 전에 미리 준비
     });
 
     async function loadInitialData() {
@@ -1360,8 +1945,10 @@
       renderCards();
       syncHeaderHeightVar();
 
-      if (!SCRIPT_URL || SCRIPT_URL.includes('여기에_배포된')) {
-        showToast('SCRIPT_URL 설정 전 기본 화면으로 표시 중입니다.');
+      if (!/^https?:\/\//i.test(String(SCRIPT_URL || ''))) {
+        showToast('SCRIPT_URL이 올바른 웹 앱 주소(https://script.google.com/...)가 아닙니다.');
+        document.getElementById('cardsGrid').innerHTML =
+          '<div class="empty-box">SCRIPT_URL에 배포한 웹 앱 주소를 입력해야 데이터를 불러올 수 있습니다.</div>';
         return;
       }
 
@@ -1378,7 +1965,73 @@
       }
     }
 
-    async function postAction(payloadObj) {
+    function applyActionResultToState(action, result, payloadObj) {
+      if (!result) return;
+
+      if (action === 'addPlace' && result.place) {
+        state.places.unshift(result.place);
+      } else if (action === 'updatePlace' && result.place) {
+        const idx = state.places.findIndex(p => p.place_id === result.place.place_id);
+        if (idx >= 0) state.places[idx] = result.place;
+        else state.places.unshift(result.place);
+      } else if (action === 'trashPlace' && result.place_id) {
+        state.places = state.places.filter(p => p.place_id !== result.place_id);
+      } else if (action === 'toggleLike' && result.place_id) {
+        const p = state.places.find(x => x.place_id === result.place_id);
+        if (p && result.like_count !== undefined) p.like_count = Number(result.like_count) || 0;
+        if (result.liked) {
+          if (!state.likedPlaceIds.includes(result.place_id)) state.likedPlaceIds.push(result.place_id);
+        } else {
+          state.likedPlaceIds = state.likedPlaceIds.filter(id => id !== result.place_id);
+        }
+      } else if (action === 'addComment' && result.place_id && Array.isArray(result.comments)) {
+        const p = state.places.find(x => x.place_id === result.place_id);
+        if (p) p.comments = result.comments;
+      } else if (action === 'addOption' && result.col_key) {
+        const existingMeta = state.columnsMeta.find(m => m.col_key === result.col_key);
+        if (existingMeta) {
+          existingMeta.options = Array.isArray(result.options) ? result.options : existingMeta.options;
+        } else {
+          state.columnsMeta.push({
+            col_key: result.col_key,
+            input_type: 'select',
+            options: Array.isArray(result.options) ? result.options : []
+          });
+        }
+      } else if (action === 'addColumn' && result.col_key) {
+        if ((result.input_type || 'text') === 'select') {
+          if (!state.columnsMeta.some(m => m.col_key === result.col_key)) {
+            state.columnsMeta.push({
+              col_key: result.col_key,
+              input_type: 'select',
+              options: Array.isArray(result.options) ? result.options : []
+            });
+          }
+        } else if (!state.dynamicPlainColumns.includes(result.col_key)) {
+          state.dynamicPlainColumns.push(result.col_key);
+        }
+      }
+
+      renderTopQuickFilters();
+      renderDrawerFilters();
+      renderCards();
+      renderExistingCategoriesPreview();
+      if (state.overviewMapOpen) renderOverviewMap();
+
+      if (state.activeDetailPlaceId) {
+        const stillExists = state.places.some(p => p.place_id === state.activeDetailPlaceId);
+        if (stillExists) renderDetailModal();
+        else {
+          state.activeDetailPlaceId = null;
+          closeModal('detailModal');
+        }
+      }
+    }
+
+    async function postAction(payloadObj, beforeApply) {
+      if (isObserver()) {
+        throw new Error('관찰자 모드에서는 열람만 가능합니다. 닉네임을 설정해 주세요.');
+      }
       const res = await fetch(SCRIPT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -1392,21 +2045,33 @@
         throw new Error(text || '응답 파싱 실패');
       }
       if (!json.ok) throw new Error(json.error || '처리 실패');
-      if (json.data) applyPayload(json.data);
+      if (typeof beforeApply === 'function' && json.result) beforeApply(json.result);
+      if (json.data) {
+        applyPayload(json.data);
+      } else if (json.result) {
+        applyActionResultToState(payloadObj.action, json.result, payloadObj);
+      }
       return json;
     }
 
     function applyPayload(data) {
+      if (data.origin && Number.isFinite(Number(data.origin.lat)) && Number.isFinite(Number(data.origin.lng))) {
+        state.origin = {
+          name: data.origin.name || ORIGIN_POINT.name,
+          lat: Number(data.origin.lat),
+          lng: Number(data.origin.lng)
+        };
+      }
       state.places = Array.isArray(data.places) ? data.places : [];
       state.columnsMeta = Array.isArray(data.columnsMeta) ? data.columnsMeta : [];
       state.dynamicPlainColumns = Array.isArray(data.dynamicPlainColumns) ? data.dynamicPlainColumns : [];
-     // applyPayload(data) 내부
-state.likedPlaceIds = Array.isArray(data.likedPlaceIds) ? data.likedPlaceIds : [];
+      state.likedPlaceIds = Array.isArray(data.likedPlaceIds) ? data.likedPlaceIds : [];
 
       renderTopQuickFilters();
       renderDrawerFilters();
       renderCards();
       renderExistingCategoriesPreview();
+      if (state.overviewMapOpen) renderOverviewMap();
       syncHeaderHeightVar();
 
       const formModal = document.getElementById('placeFormModal');
@@ -1450,23 +2115,54 @@ state.likedPlaceIds = Array.isArray(data.likedPlaceIds) ? data.likedPlaceIds : [
       renderTopQuickFilters();
       renderDrawerFilters();
       renderCards();
+      if (state.overviewMapOpen) renderOverviewMap();
     }
 
-async function loadProxyImagesIntoDom() {
-  const imgs = document.querySelectorAll('img[data-proxy-url]');
-  for (const img of imgs) {
-    const url = img.getAttribute('data-proxy-url');
-    if (!url || img.getAttribute('data-loaded') === '1') continue;
-    try {
-      const res = await fetch(url);
-      const json = await res.json();
-      if (json.ok && json.dataUri) {
-        img.src = json.dataUri;
-        img.setAttribute('data-loaded', '1');
-      }
-    } catch (_) {}
-  }
-}
+    function fetchPhotoDataUri(url) {
+      if (photoDataUriCache.has(url)) return Promise.resolve(photoDataUriCache.get(url));
+      if (photoInflight.has(url)) return photoInflight.get(url);
+      const p = fetch(url)
+        .then(res => res.json())
+        .then(json => {
+          if (json && json.ok && json.dataUri) {
+            photoDataUriCache.set(url, json.dataUri);
+            return json.dataUri;
+          }
+          return '';
+        })
+        .catch(() => '')
+        .finally(() => photoInflight.delete(url));
+      photoInflight.set(url, p);
+      return p;
+    }
+
+    async function loadProxyImagesIntoDom() {
+      const queue = [];
+      document.querySelectorAll('img[data-proxy-url]').forEach(img => {
+        if (img.getAttribute('data-loaded') === '1') return;
+        const url = img.getAttribute('data-proxy-url');
+        if (!url) return;
+        if (photoDataUriCache.has(url)) {
+          img.src = photoDataUriCache.get(url);
+          img.setAttribute('data-loaded', '1');
+          return;
+        }
+        queue.push({ img, url });
+      });
+
+      let cursor = 0;
+      const worker = async () => {
+        while (cursor < queue.length) {
+          const { img, url } = queue[cursor++];
+          const dataUri = await fetchPhotoDataUri(url);
+          if (dataUri && img.isConnected) {
+            img.src = dataUri;
+            img.setAttribute('data-loaded', '1');
+          }
+        }
+      };
+      await Promise.all(Array.from({ length: Math.min(4, queue.length) }, worker));
+    }
 
     function clearAllFilters() {
       state.selectedFilters = {};
@@ -1474,39 +2170,40 @@ async function loadProxyImagesIntoDom() {
       renderTopQuickFilters();
       renderDrawerFilters();
       renderCards();
+      if (state.overviewMapOpen) renderOverviewMap();
     }
 
     function renderTopQuickFilters() {
-  const rowMap = {
-    purpose: 'topPurposeRow',
-    category: 'topCategoryRow',
-    area: 'topAreaRow'
-  };
+      const rowMap = {
+        purpose: 'topPurposeRow',
+        category: 'topCategoryRow',
+        area: 'topAreaRow'
+      };
 
-  HEADER_SHORTCUTS.forEach(sc => {
-    const row = document.getElementById(rowMap[sc.colKey]);
-    if (!row) return;
-    row.innerHTML = '';
+      HEADER_SHORTCUTS.forEach(sc => {
+        const row = document.getElementById(rowMap[sc.colKey]);
+        if (!row) return;
+        row.innerHTML = '';
 
-    const lbl = document.createElement('span');
-    lbl.className = 'quick-label';
-    lbl.textContent = sc.label;
-    row.appendChild(lbl);
+        const lbl = document.createElement('span');
+        lbl.className = 'quick-label';
+        lbl.textContent = sc.label;
+        row.appendChild(lbl);
 
-    const activeSet = ensureFilterSet(sc.colKey);
-    sc.items.forEach(opt => {
-      const displayText = typeof opt === 'object' ? opt.text : opt;
-      const filterValue = typeof opt === 'object' ? opt.value : opt;
+        const activeSet = ensureFilterSet(sc.colKey);
+        sc.items.forEach(opt => {
+          const displayText = typeof opt === 'object' ? opt.text : opt;
+          const filterValue = typeof opt === 'object' ? opt.value : opt;
 
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'quick-item' + (activeSet.has(filterValue) ? ' active' : '');
-      btn.textContent = displayText;
-      btn.onclick = () => toggleFilterValue(sc.colKey, filterValue);
-      row.appendChild(btn);
-    });
-  });
-}
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'quick-item' + (activeSet.has(filterValue) ? ' active' : '');
+          btn.textContent = displayText;
+          btn.onclick = () => toggleFilterValue(sc.colKey, filterValue);
+          row.appendChild(btn);
+        });
+      });
+    }
 
     function getExtraCategories() {
       const list = [];
@@ -1613,6 +2310,15 @@ async function loadProxyImagesIntoDom() {
 
       if (sortBy === 'name') {
         list.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'ko'));
+      } else if (sortBy === 'distance') {
+        list.sort((a, b) => {
+          const da = getPlaceDistanceMeters(a);
+          const db = getPlaceDistanceMeters(b);
+          if (da === null && db === null) return 0;
+          if (da === null) return 1;
+          if (db === null) return -1;
+          return da - db;
+        });
       } else {
         list.sort((a, b) => (Number(b.like_count) || 0) - (Number(a.like_count) || 0));
       }
@@ -1641,7 +2347,7 @@ async function loadProxyImagesIntoDom() {
       const grid = document.getElementById('cardsGrid');
       const list = getFilteredPlaces();
 
-      const addCardHtml = `
+      const addCardHtml = isObserver() ? '' : `
         <div class="add-tile" onclick="openPlaceFormModal()" title="식당 추가" aria-label="식당 추가">+</div>
       `;
 
@@ -1655,6 +2361,7 @@ async function loadProxyImagesIntoDom() {
           ...splitSemi(p.category)
         ];
         const summaryText = summaryParts.length ? summaryParts.join(' · ') : '목적 · 위치 · 종류';
+        const distText = formatDistanceText(getPlaceDistanceMeters(p));
 
         const thumbHtml = firstProxyUrl
           ? `<img src="" alt="${escapeAttr(p.name)}" data-proxy-url="${escapeAttr(firstProxyUrl)}" data-loaded="0" loading="lazy" />
@@ -1667,7 +2374,10 @@ async function loadProxyImagesIntoDom() {
             <div class="card-info">
               <h2 class="card-name">${escapeHtml(p.name || '식당이름')}</h2>
               <div class="card-summary">${escapeHtml(summaryText)}</div>
-              <div class="card-like-row">♡ <span>${Number(p.like_count) || 0}</span></div>
+              <div class="card-like-row">
+                <span>♡ <span>${Number(p.like_count) || 0}</span></span>
+                ${distText ? `<span class="distance-pill">${escapeHtml(distText)}</span>` : ''}
+              </div>
             </div>
           </article>
         `;
@@ -1675,9 +2385,220 @@ async function loadProxyImagesIntoDom() {
 
       grid.innerHTML = addCardHtml + (placeCardsHtml || '<div class="empty-box">조건에 맞는 식당이 없습니다.</div>');
       loadProxyImagesIntoDom();
+      if (state.overviewMapOpen) renderOverviewMap();
     }
 
-    // 3. 상세 보기: 주소 클릭/터치 복사 및 아이콘 표시
+    /* =========================================================
+     * 지도 시각화 (Leaflet + OpenStreetMap, 단순 위치 + 직선거리)
+     * ========================================================= */
+
+    function toggleOverviewMap() {
+      state.overviewMapOpen = !state.overviewMapOpen;
+      const box = document.getElementById('overviewMapBox');
+      const btn = document.getElementById('toggleMapBtn');
+      if (state.overviewMapOpen) {
+        box.classList.add('open');
+        btn.textContent = '지도 접기';
+        renderOverviewMap();
+      } else {
+        box.classList.remove('open');
+        btn.textContent = '지도 보기';
+      }
+    }
+
+    function renderOverviewMap() {
+      if (!leafletReady) {
+        const note = document.getElementById('overviewDistanceInfo');
+        if (note) note.textContent = '지도를 불러오는 중입니다…';
+        ensureLeaflet().then(ok => {
+          if (ok) {
+            if (state.overviewMapOpen) renderOverviewMap();
+          } else if (note) {
+            note.textContent = '지도 라이브러리를 불러오지 못했습니다. 인터넷 연결·차단 프로그램을 확인하고 새로고침해 주세요.';
+          }
+        });
+        return;
+      }
+      const cap = document.getElementById('overviewMapCaption');
+      if (cap) {
+        cap.innerHTML = `기준점: <strong>${escapeHtml(state.origin.name)}</strong> (${state.origin.lat}, ${state.origin.lng})`;
+      }
+
+      if (!overviewMapInstance) {
+        overviewMapInstance = L.map('overviewMap').setView([state.origin.lat, state.origin.lng], 16);
+        addBaseTiles(overviewMapInstance, setOverviewTileStatus);
+        overviewMarkersLayer = L.layerGroup().addTo(overviewMapInstance);
+        overviewLineLayer = L.layerGroup().addTo(overviewMapInstance);
+      }
+
+      setTimeout(() => overviewMapInstance && overviewMapInstance.invalidateSize(), 40);
+      setTimeout(() => overviewMapInstance && overviewMapInstance.invalidateSize(), 300);
+      overviewMarkersLayer.clearLayers();
+      overviewLineLayer.clearLayers();
+
+      L.circleMarker([state.origin.lat, state.origin.lng], {
+        radius: 8,
+        color: '#111111',
+        fillColor: '#111111',
+        fillOpacity: 0.95
+      })
+        .bindPopup(`<strong>기준점</strong><br/>${escapeHtml(state.origin.name)}`)
+        .addTo(overviewMarkersLayer);
+
+      const list = getFilteredPlaces();
+      let mappedCount = 0;
+
+      list.forEach(p => {
+        const lat = parseCoordNum(p.lat);
+        const lng = parseCoordNum(p.lng);
+        if (lat === null || lng === null) return;
+        mappedCount += 1;
+        const distM = getPlaceDistanceMeters(p);
+        const distLabel = formatDistanceText(distM) || '거리 미계산';
+
+        const marker = L.marker([lat, lng], { icon: makePinIcon() }).addTo(overviewMarkersLayer);
+        marker.bindPopup(`<strong>${escapeHtml(p.name)}</strong><br/>기준점으로부터 ${escapeHtml(distLabel)}`);
+        marker.on('click', () => {
+          overviewLineLayer.clearLayers();
+          L.polyline(
+            [[state.origin.lat, state.origin.lng], [lat, lng]],
+            { color: '#111111', weight: 2.5, dashArray: '5, 6' }
+          ).addTo(overviewLineLayer);
+          const infoEl = document.getElementById('overviewDistanceInfo');
+          if (infoEl) {
+            infoEl.innerHTML = `<strong>${escapeHtml(p.name)}</strong> ↔ ${escapeHtml(state.origin.name)}: <strong>${escapeHtml(distLabel)}</strong>`;
+          }
+        });
+      });
+
+      const infoEl = document.getElementById('overviewDistanceInfo');
+      if (infoEl) {
+        infoEl.textContent = mappedCount > 0
+          ? `표시된 핀 ${mappedCount}개 · 핀 클릭 시 기준점 직선거리 표시`
+          : '좌표(lat, lng)가 등록된 식당이 아직 없습니다. 식당 수정에서 지도를 클릭해 좌표를 지정할 수 있습니다.';
+      }
+    }
+
+    function renderDetailMiniMap(place) {
+      const box = document.getElementById('detailMiniMap');
+      if (!box) return;
+      if (!leafletReady) {
+        setMapNote(box, '지도를 불러오는 중…');
+        ensureLeaflet().then(ok => {
+          const cur = document.getElementById('detailMiniMap');
+          if (ok) {
+            if (cur && state.activeDetailPlaceId === place.place_id) renderDetailMiniMap(place);
+          } else {
+            setMapNote(cur, '지도를 불러오지 못했습니다.');
+          }
+        });
+        return;
+      }
+      const lat = parseCoordNum(place.lat);
+      const lng = parseCoordNum(place.lng);
+      if (lat === null || lng === null) return;
+
+      if (detailMapInstance) {
+        detailMapInstance.remove();
+        detailMapInstance = null;
+      }
+
+      box.innerHTML = '';
+      detailMapInstance = L.map('detailMiniMap', { zoomControl: true }).setView([lat, lng], 16);
+      addBaseTiles(detailMapInstance);
+
+      L.circleMarker([state.origin.lat, state.origin.lng], {
+        radius: 6,
+        color: '#111111',
+        fillColor: '#111111',
+        fillOpacity: 0.9
+      }).bindTooltip(state.origin.name).addTo(detailMapInstance);
+
+      L.marker([lat, lng], { icon: makePinIcon() }).bindTooltip(place.name || '식당').addTo(detailMapInstance);
+
+      const line = L.polyline(
+        [[state.origin.lat, state.origin.lng], [lat, lng]],
+        { color: '#111111', weight: 2, dashArray: '4, 5' }
+      ).addTo(detailMapInstance);
+
+      detailMapInstance.fitBounds(line.getBounds().pad(0.28));
+      setTimeout(() => detailMapInstance && detailMapInstance.invalidateSize(), 60);
+      setTimeout(() => detailMapInstance && detailMapInstance.invalidateSize(), 320);
+    }
+
+    function initOrUpdateFormMap(latVal, lngVal) {
+      const box = document.getElementById('formPickMap');
+      if (!box) return;
+      if (!leafletReady) {
+        setMapNote(box, '지도를 불러오는 중…');
+        ensureLeaflet().then(ok => {
+          if (ok) {
+            const modal = document.getElementById('placeFormModal');
+            if (modal && modal.classList.contains('open')) initOrUpdateFormMap(latVal, lngVal);
+          } else {
+            setMapNote(box, '지도를 불러오지 못했습니다. 좌표(위도·경도)는 직접 입력할 수 있습니다.');
+          }
+        });
+        return;
+      }
+
+      const lat = parseCoordNum(latVal);
+      const lng = parseCoordNum(lngVal);
+      const center = (lat !== null && lng !== null) ? [lat, lng] : [state.origin.lat, state.origin.lng];
+
+      if (!formMapInstance) {
+        box.innerHTML = '';
+        formMapInstance = L.map('formPickMap').setView(center, 16);
+        addBaseTiles(formMapInstance);
+
+        L.circleMarker([state.origin.lat, state.origin.lng], {
+          radius: 6,
+          color: '#111111',
+          fillColor: '#111111',
+          fillOpacity: 0.9
+        }).bindTooltip(state.origin.name).addTo(formMapInstance);
+
+        formMapInstance.on('click', e => {
+          const pickedLat = Number(e.latlng.lat.toFixed(6));
+          const pickedLng = Number(e.latlng.lng.toFixed(6));
+          document.getElementById('f_lat').value = pickedLat;
+          document.getElementById('f_lng').value = pickedLng;
+          setFormPickMarker(pickedLat, pickedLng, false);
+        });
+      } else {
+        formMapInstance.setView(center, 16);
+      }
+
+      if (lat !== null && lng !== null) {
+        setFormPickMarker(lat, lng, false);
+      } else if (formPickMarker) {
+        formMapInstance.removeLayer(formPickMarker);
+        formPickMarker = null;
+      }
+
+      setTimeout(() => formMapInstance && formMapInstance.invalidateSize(), 60);
+      setTimeout(() => formMapInstance && formMapInstance.invalidateSize(), 320);
+    }
+
+    function setFormPickMarker(lat, lng, recenter) {
+      if (!formMapInstance) return;
+      if (formPickMarker) {
+        formPickMarker.setLatLng([lat, lng]);
+      } else {
+        formPickMarker = L.marker([lat, lng], { icon: makePinIcon() }).addTo(formMapInstance);
+      }
+      if (recenter) formMapInstance.setView([lat, lng], 16);
+    }
+
+    function syncFormMapMarker() {
+      const lat = parseCoordNum(document.getElementById('f_lat').value);
+      const lng = parseCoordNum(document.getElementById('f_lng').value);
+      if (lat !== null && lng !== null) {
+        setFormPickMarker(lat, lng, true);
+      }
+    }
+
+    // 주소 클릭/터치 복사 및 아이콘 표시
     function copyAddressText(addrText, btnEl) {
       if (!addrText) return;
       const done = () => {
@@ -1722,13 +2643,78 @@ async function loadProxyImagesIntoDom() {
       openModal('detailModal');
     }
 
+    // 이웃 사진을 미리 받아 두는 대기열 (동시 3개, 새 우선순위가 오면 이전 대기열은 버림)
+    const prefetchQueue = [];
+    let prefetchActive = 0;
+
+    function pumpPrefetch() {
+      while (prefetchActive < 3 && prefetchQueue.length) {
+        const url = prefetchQueue.shift();
+        if (photoDataUriCache.has(url) || photoInflight.has(url)) continue;
+        prefetchActive += 1;
+        fetchPhotoDataUri(url).finally(() => {
+          prefetchActive -= 1;
+          pumpPrefetch();
+        });
+      }
+    }
+
+    function prefetchDetailPhotos(place) {
+      const urls = Array.isArray(place.photo_proxy_urls) ? place.photo_proxy_urls : [];
+      const n = urls.length;
+      if (n <= 1) return;
+      const idx = state.detailSlideIdx;
+      // 다음 → 이전 → 그 다음 → 그 이전 … 순서
+      const order = [];
+      for (let k = 1; k <= Math.floor(n / 2) + 1; k++) {
+        order.push(urls[(idx + k) % n]);
+        order.push(urls[(idx - k + n * 2) % n]);
+      }
+      prefetchQueue.length = 0;
+      Array.from(new Set(order))
+        .filter(u => u && u !== urls[idx] && !photoDataUriCache.has(u))
+        .forEach(u => prefetchQueue.push(u));
+      pumpPrefetch();
+    }
+
+    // 현재 인덱스의 사진을 화면에 반영 (이미 받아 둔 사진이면 즉시)
+    function showDetailSlide(place) {
+      const urls = Array.isArray(place.photo_proxy_urls) ? place.photo_proxy_urls : [];
+      const idx = state.detailSlideIdx;
+      const url = urls[idx] || '';
+      const img = document.getElementById('detailPhotoImg');
+      if (!img || !url) return;
+
+      const total = Number(place.photo_count) || urls.length;
+      const ind = document.getElementById('detailPhotoIndicator');
+      if (ind) ind.textContent = `${idx + 1} / ${total}`;
+      const zoom = document.getElementById('detailPhotoZoom');
+      if (zoom) zoom.href = `${url}&mode=view`;
+
+      img._wantUrl = url;
+      const box = img.parentElement;
+      if (photoDataUriCache.has(url)) {
+        img.src = photoDataUriCache.get(url);
+        if (box) box.classList.remove('is-loading');
+      } else {
+        // 받아오는 동안 이전 사진을 흐리게 유지 (빈 화면 방지)
+        if (box) box.classList.add('is-loading');
+        fetchPhotoDataUri(url).then(uri => {
+          if (img._wantUrl !== url) return; // 그 사이 다른 사진으로 넘어갔으면 무시
+          if (box) box.classList.remove('is-loading');
+          if (uri) img.src = uri;
+        });
+      }
+      prefetchDetailPhotos(place);
+    }
+
     function stepDetailSlide(delta) {
       const place = state.places.find(p => p.place_id === state.activeDetailPlaceId);
       if (!place) return;
       const proxyUrls = Array.isArray(place.photo_proxy_urls) ? place.photo_proxy_urls : [];
       if (proxyUrls.length <= 1) return;
       state.detailSlideIdx = (state.detailSlideIdx + delta + proxyUrls.length) % proxyUrls.length;
-      renderDetailModal();
+      showDetailSlide(place); // 모달 전체를 다시 그리지 않음
     }
 
     function renderDetailModal() {
@@ -1754,14 +2740,14 @@ async function loadProxyImagesIntoDom() {
       const zoomHref = currentProxyUrl ? `${currentProxyUrl}&mode=view` : '#';
 
       const photoVisualHtml = currentProxyUrl
-        ? `<img src="" alt="${escapeAttr(place.name)}" data-proxy-url="${escapeAttr(currentProxyUrl)}" data-loaded="0" />
+        ? `<img id="detailPhotoImg" alt="${escapeAttr(place.name)}" />
            ${proxyUrls.length > 1
-             ? `<button type="button" class="carousel-arrow prev" onclick="event.stopPropagation();stepDetailSlide(-1)" aria-label="이전 사진"><</button>
-                <button type="button" class="carousel-arrow next" onclick="event.stopPropagation();stepDetailSlide(1)" aria-label="다음 사진">></button>`
+             ? `<button type="button" class="carousel-arrow prev" onclick="event.stopPropagation();stepDetailSlide(-1)" aria-label="이전 사진">&#8249;</button>
+                <button type="button" class="carousel-arrow next" onclick="event.stopPropagation();stepDetailSlide(1)" aria-label="다음 사진">&#8250;</button>`
              : ''}
            <div class="carousel-controls-bottom" onclick="event.stopPropagation()">
-             ${totalPhotos > 1 ? `<span class="carousel-indicator">${idx + 1} / ${totalPhotos}</span>` : ''}
-             <a class="photo-zoom-link" href="${escapeAttr(zoomHref)}" target="_blank" rel="noopener noreferrer">사진 원본 보기 ↗</a>
+             ${totalPhotos > 1 ? `<span class="carousel-indicator" id="detailPhotoIndicator">${idx + 1} / ${totalPhotos}</span>` : ''}
+             <a class="photo-zoom-link" id="detailPhotoZoom" href="${escapeAttr(zoomHref)}" target="_blank" rel="noopener noreferrer">사진 원본 보기 ↗</a>
            </div>`
         : `<span style="color:var(--muted);">(이미지)</span>`;
 
@@ -1794,9 +2780,19 @@ async function loadProxyImagesIntoDom() {
         place.naver_map_url ? `<a href="${escapeAttr(place.naver_map_url)}" target="_blank" rel="noopener noreferrer">네이버지도</a>` : ''
       ].filter(Boolean).join(' · ');
 
+      const hasCoords = parseCoordNum(place.lat) !== null && parseCoordNum(place.lng) !== null;
+      const distLabel = formatDistanceText(getPlaceDistanceMeters(place));
+
+      const distanceRowHtml = distLabel
+        ? `<div class="detail-kv"><span class="detail-k">거리</span><span class="detail-v">${escapeHtml(state.origin.name)} 기준 <strong>${escapeHtml(distLabel)}</strong> (직선)</span></div>`
+        : '';
+
+      const miniMapHtml = hasCoords ? `<div id="detailMiniMap" class="mini-map-box"></div>` : '';
+
       const leftKvHtml = [
         place.max_capacity ? `<div class="detail-kv"><span class="detail-k">인원</span><span class="detail-v">${escapeHtml(place.max_capacity)}</span></div>` : '',
         addressRowHtml,
+        distanceRowHtml,
         place.parking ? `<div class="detail-kv"><span class="detail-k">주차</span><span class="detail-v">${escapeHtml(place.parking)}</span></div>` : '',
         mapLinksHtml ? `<div class="detail-kv"><span class="detail-k">지도</span><span class="detail-v">${mapLinksHtml}</span></div>` : '',
         ...leftExtra.map(x => `<div class="detail-kv"><span class="detail-k">${escapeHtml(x.key)}</span><span class="detail-v">${escapeHtml(x.val)}</span></div>`)
@@ -1807,6 +2803,23 @@ async function loadProxyImagesIntoDom() {
             rightOverflowExtra.map(x => `<div><strong>${escapeHtml(x.key)}:</strong> ${escapeHtml(x.val)}</div>`).join('')
           }</div>`
         : '';
+
+      const observer = isObserver();
+      const likePillHtml = observer
+        ? `<span class="like-pill static" aria-label="좋아요 수">♡ <span>${Number(place.like_count) || 0}</span></span>`
+        : `<button type="button" class="like-pill ${myLiked ? 'liked' : ''}" onclick="onToggleLike('${escapeAttr(place.place_id)}')">
+              ${myLiked ? '♥' : '♡'} <span>${Number(place.like_count) || 0}</span>
+            </button>`;
+      const topActionsHtml = observer ? '' : `<div class="detail-top-actions">
+              <button type="button" class="action-text-btn" onclick="onEditPlace('${escapeAttr(place.place_id)}')">수정</button>
+              <button type="button" class="action-text-btn delete" onclick="onTrashPlace('${escapeAttr(place.place_id)}')">삭제</button>
+            </div>`;
+      const commentComposeHtml = observer
+        ? `<div style="font-size:0.8rem; color:var(--muted); padding-top:6px;">관찰자 모드: 댓글은 읽기만 가능합니다. (닉네임 설정 시 작성 가능)</div>`
+        : `<div class="comment-compose">
+              <input type="text" id="detailCommentInput" placeholder="댓글 남기기 (닉네임 비공개)" style="flex:1; padding:7px 10px; border:1px solid var(--line-soft); border-radius:8px; font-size:0.86rem;" onkeydown="if(event.key==='Enter'){event.preventDefault();onSubmitDetailComment('${escapeAttr(place.place_id)}');}" />
+              <button type="button" class="sm primary" onclick="onSubmitDetailComment('${escapeAttr(place.place_id)}')">등록</button>
+            </div>`;
 
       const comments = Array.isArray(place.comments) ? place.comments : [];
       const commentsHtml = comments.length
@@ -1823,33 +2836,27 @@ async function loadProxyImagesIntoDom() {
           <div class="carousel-box">${photoVisualHtml}</div>
           <div class="detail-title-bar">
             <h2 class="detail-title">${escapeHtml(place.name || '식당이름')}</h2>
-            <button type="button" class="like-pill ${myLiked ? 'liked' : ''}" onclick="onToggleLike('${escapeAttr(place.place_id)}')">
-              ${myLiked ? '♥' : '♡'} <span>${Number(place.like_count) || 0}</span>
-            </button>
+            ${likePillHtml}
           </div>
           <div class="detail-sub-summary">${escapeHtml(summaryText)}</div>
           <div class="detail-kv-list">${leftKvHtml}</div>
+          ${miniMapHtml}
         </div>
 
         <div class="detail-right">
           <div>
-            <div class="detail-top-actions">
-              <button type="button" class="action-text-btn" onclick="onEditPlace('${escapeAttr(place.place_id)}')">수정</button>
-              <button type="button" class="action-text-btn delete" onclick="onTrashPlace('${escapeAttr(place.place_id)}')">삭제</button>
-            </div>
+            ${topActionsHtml}
             ${rightOverflowHtml}
           </div>
 
           <div class="comments-bottom-wrap">
             <div class="comments-scroll">${commentsHtml}</div>
-            <div class="comment-compose">
-              <input type="text" id="detailCommentInput" placeholder="댓글 남기기 (닉네임 비공개)" style="flex:1; padding:7px 10px; border:1px solid var(--line-soft); border-radius:8px; font-size:0.86rem;" onkeydown="if(event.key==='Enter'){event.preventDefault();onSubmitDetailComment('${escapeAttr(place.place_id)}');}" />
-              <button type="button" class="sm primary" onclick="onSubmitDetailComment('${escapeAttr(place.place_id)}')">등록</button>
-            </div>
+            ${commentComposeHtml}
           </div>
         </div>
       `;
-      loadProxyImagesIntoDom();
+      showDetailSlide(place);
+      if (hasCoords) renderDetailMiniMap(place);
     }
 
     function onToggleLike(placeId) {
@@ -1908,6 +2915,7 @@ async function loadProxyImagesIntoDom() {
         await postAction({
           action: 'trashPlace',
           place_id: state.deletingPlaceId,
+          confirmText: phrase,
           confirm_text: phrase
         });
         closeModal('deleteModal');
@@ -1919,7 +2927,7 @@ async function loadProxyImagesIntoDom() {
       }
     }
 
-    // 2. 식당 추가 시 식당명 문자열 검색 및 추천 목록 선택
+    // 식당 추가 시 식당명 문자열 검색 및 추천 목록 선택
     function hideNameSuggestions() {
       const box = document.getElementById('nameSuggestList');
       if (box) box.classList.remove('open');
@@ -1969,9 +2977,12 @@ async function loadProxyImagesIntoDom() {
       document.getElementById('f_name').value = src.name || '';
       document.getElementById('f_max_capacity').value = src.max_capacity || '';
       document.getElementById('f_address').value = getPlaceAddress(src);
+      document.getElementById('f_lat').value = src.lat ?? '';
+      document.getElementById('f_lng').value = src.lng ?? '';
       document.getElementById('f_parking').value = src.parking || '';
       document.getElementById('f_kakao_map_url').value = src.kakao_map_url || '';
       document.getElementById('f_naver_map_url').value = src.naver_map_url || '';
+      initOrUpdateFormMap(src.lat, src.lng);
 
       formSelected.purpose = new Set(splitSemi(src.purpose));
       formSelected.category = new Set(splitSemi(src.category));
@@ -1986,8 +2997,8 @@ async function loadProxyImagesIntoDom() {
     }
 
     function openPlaceFormModal(placeId = null) {
-      if (!placeId && !state.nickname) {
-        requireNickname(() => openPlaceFormModal(null));
+      if (isObserver()) {
+        notifyObserver();
         return;
       }
 
@@ -2002,6 +3013,8 @@ async function loadProxyImagesIntoDom() {
       document.getElementById('f_name').value = existing ? (existing.name || '') : '';
       document.getElementById('f_max_capacity').value = existing ? (existing.max_capacity || '') : '';
       document.getElementById('f_address').value = existing ? getPlaceAddress(existing) : '';
+      document.getElementById('f_lat').value = existing && existing.lat != null ? existing.lat : '';
+      document.getElementById('f_lng').value = existing && existing.lng != null ? existing.lng : '';
       document.getElementById('f_parking').value = existing ? (existing.parking || '') : '';
       document.getElementById('f_kakao_map_url').value = existing ? (existing.kakao_map_url || '') : '';
       document.getElementById('f_naver_map_url').value = existing ? (existing.naver_map_url || '') : '';
@@ -2020,9 +3033,10 @@ async function loadProxyImagesIntoDom() {
 
       renderExtraCategoryInputs(existing);
       openModal('placeFormModal');
+      initOrUpdateFormMap(existing ? existing.lat : '', existing ? existing.lng : '');
     }
 
-    // 1. '+ 옵션 추가' 팝업 모달 오픈 및 저장
+    // '+ 옵션 추가' 팝업 모달 오픈 및 저장
     function openAddOptionModal(colKey, fallback, selSet, chipContainerId) {
       requireNickname(() => {
         state.optionTarget = { colKey, fallback, selSet, chipContainerId };
@@ -2268,9 +3282,24 @@ async function loadProxyImagesIntoDom() {
       return r.imageUrl || r.photoUrl || r.url || '';
     }
 
+    // 방금 올린 사진(리사이즈된 미리보기)을 사진 캐시에 미리 넣어,
+    // 저장 직후 카드·상세에서 서버 왕복 없이 바로 보이게 함
+    function seedPhotoCache(result, pending, startIdx) {
+      const urls = (result && result.place && Array.isArray(result.place.photo_proxy_urls))
+        ? result.place.photo_proxy_urls : [];
+      pending.forEach((item, i) => {
+        const u = urls[startIdx + i];
+        if (u && item.previewUrl) photoDataUriCache.set(u, item.previewUrl);
+      });
+    }
+
     async function submitPlaceForm(ev) {
       ev.preventDefault();
       hideNameSuggestions();
+      if (isObserver()) {
+        notifyObserver();
+        return;
+      }
 
       if (state.pendingPhotoUploads.length > 0) {
         const ok = await askPhotoUploadConsent();
@@ -2281,20 +3310,44 @@ async function loadProxyImagesIntoDom() {
       }
 
       const btn = document.getElementById('savePlaceBtn');
+      const btnLabel = btn.textContent;
       btn.disabled = true;
 
       try {
-        const uploadedUrls = [];
         const targetId = state.editingPlaceId || 'NEW';
+        const pending = state.pendingPhotoUploads.slice();
+        const total = pending.length;
 
-        for (let i = 0; i < state.pendingPhotoUploads.length; i++) {
-          const item = state.pendingPhotoUploads[i];
-          const url = await uploadSinglePhotoToDrive(item, targetId);
-          if (url) uploadedUrls.push(url);
+        btn.textContent = total ? `사진 업로드 중… (0/${total})` : '저장 중…';
+
+        // 사진은 최대 3장씩 동시에 업로드. 이미 올라간 사진(재시도 시)은 건너뜀.
+        const todo = pending.filter(it => !it.uploadedUrl);
+        let cursor = 0;
+        let failed = 0;
+        const worker = async () => {
+          while (cursor < todo.length) {
+            const item = todo[cursor++];
+            try {
+              item.uploadedUrl = await uploadSinglePhotoToDrive(item, targetId);
+              if (!item.uploadedUrl) failed += 1;
+            } catch (_) {
+              failed += 1;
+            }
+            const done = pending.filter(it => it.uploadedUrl).length;
+            btn.textContent = `사진 업로드 중… (${done}/${total})`;
+          }
+        };
+        await Promise.all(Array.from({ length: Math.min(3, todo.length) }, worker));
+        if (failed > 0) {
+          throw new Error(`사진 ${failed}장 업로드에 실패했습니다. 저장을 다시 누르면 실패한 사진만 다시 올립니다.`);
         }
+        const uploadedUrls = pending.map(it => it.uploadedUrl);
 
-        const mergedPhotoUrl = state.existingPhotoUrls.concat(uploadedUrls).join(DELIMITER);
+        btn.textContent = '저장 중…';
+
         const addrValue = (document.getElementById('f_address').value || '').trim();
+        const latValue = (document.getElementById('f_lat').value || '').trim();
+        const lngValue = (document.getElementById('f_lng').value || '').trim();
 
         const dynamicFields = {};
         Object.keys(formSelected.dynamicSelects).forEach(k => {
@@ -2308,6 +3361,8 @@ async function loadProxyImagesIntoDom() {
         const placePayload = {
           name: document.getElementById('f_name').value.trim(),
           address: addrValue,
+          lat: latValue,
+          lng: lngValue,
           purpose: Array.from(formSelected.purpose).join(DELIMITER),
           category: Array.from(formSelected.category).join(DELIMITER),
           area: Array.from(formSelected.area).join(DELIMITER),
@@ -2315,30 +3370,40 @@ async function loadProxyImagesIntoDom() {
           parking: document.getElementById('f_parking').value.trim(),
           kakao_map_url: document.getElementById('f_kakao_map_url').value.trim(),
           naver_map_url: document.getElementById('f_naver_map_url').value.trim(),
-          photo_url: mergedPhotoUrl,
-          dynamicFields
+          ...dynamicFields
         };
 
         if (state.editingPlaceId) {
+          // 수정: 기존 사진(서버만 URL을 알고 있음)은 그대로 두고, 새 사진만 뒤에 덧붙임
+          if (uploadedUrls.length > 0) placePayload.add_photo_urls = uploadedUrls;
+
+          const oldPhotoCount = Number(
+            (state.places.find(p => p.place_id === state.editingPlaceId) || {}).photo_count
+          ) || 0;
+
           await postAction({
             action: 'updatePlace',
             place_id: state.editingPlaceId,
             place: placePayload
-          });
+          }, result => seedPhotoCache(result, pending, oldPhotoCount));
           showToast('식당 정보가 수정되었습니다.');
         } else {
+          placePayload.photo_url = state.existingPhotoUrls.concat(uploadedUrls).join(DELIMITER);
+
           await postAction({
             action: 'addPlace',
             place: placePayload
-          });
+          }, result => seedPhotoCache(result, pending, state.existingPhotoUrls.length));
           showToast('새 식당이 추가되었습니다.');
         }
 
+        state.pendingPhotoUploads = [];
         closeModal('placeFormModal');
       } catch (err) {
         showToast(err.message);
       } finally {
         btn.disabled = false;
+        btn.textContent = btnLabel;
       }
     }
 
@@ -2357,7 +3422,7 @@ async function loadProxyImagesIntoDom() {
       requireNickname(() => {
         renderExistingCategoriesPreview();
         document.getElementById('newColName').value = '';
-        document.getElementById('newColType').value = 'text';
+        setDropdownValue('newColTypeDd', 'text');
         document.getElementById('newColOpts').value = '';
         toggleNewColOpts();
         openModal('addColumnModal');
@@ -2373,7 +3438,13 @@ async function loadProxyImagesIntoDom() {
     async function submitAddColumn() {
       const raw = document.getElementById('newColName').value.trim();
       const inputType = document.getElementById('newColType').value;
-      const options = document.getElementById('newColOpts').value.trim();
+      // 초기 선택지: ; (또는 쉼표·줄바꿈)로 구분, 중복 제거
+      const optList = Array.from(new Set(
+        document.getElementById('newColOpts').value
+          .split(/[;；,，\n]/)
+          .map(s => s.trim())
+          .filter(Boolean)
+      ));
       if (!raw) {
         showToast('새 카테고리 이름을 입력하세요.');
         return;
@@ -2384,15 +3455,32 @@ async function loadProxyImagesIntoDom() {
       if (submitBtn) submitBtn.disabled = true;
 
       try {
-        await postAction({ action: 'addColumn', col_key: key, input_type: inputType, options });
+        const res = await postAction({
+          action: 'addColumn',
+          col_key: key,
+          input_type: inputType,
+          options_raw: optList.join(DELIMITER),
+          options: optList
+        });
+
+        if (inputType === 'select' && optList.length) {
+          // 서버가 아직 옛 버전이라 선택지를 못 받은 경우 → 옵션 추가 API로 보충
+          const saved = (res && res.result && Array.isArray(res.result.options)) ? res.result.options : [];
+          const missing = optList.filter(o => !saved.includes(o));
+          if (missing.length) {
+            console.warn('서버가 초기 선택지를 저장하지 않아 옵션 추가로 보충합니다. Apps Script를 새 버전으로 배포했는지 확인하세요.');
+            for (const o of missing) {
+              await postAction({ action: 'addOption', col_key: key, option: o });
+            }
+          }
+        }
 
         if (inputType === 'select') {
-          if (!state.columnsMeta.some(m => m.col_key === key)) {
-            state.columnsMeta.push({
-              col_key: key,
-              input_type: 'select',
-              options: options ? options.split(DELIMITER).map(s => s.trim()).filter(Boolean) : []
-            });
+          const meta = state.columnsMeta.find(m => m.col_key === key);
+          if (!meta) {
+            state.columnsMeta.push({ col_key: key, input_type: 'select', options: optList.slice() });
+          } else if (!Array.isArray(meta.options) || !meta.options.length) {
+            meta.options = optList.slice();
           }
         } else if (!state.dynamicPlainColumns.includes(key)) {
           state.dynamicPlainColumns.push(key);
